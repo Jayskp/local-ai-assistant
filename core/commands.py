@@ -1,3 +1,6 @@
+import re
+
+
 def parse_fast(text: str):
     t = text.lower()
     actions = []
@@ -27,6 +30,29 @@ def parse_fast(text: str):
             "action": "organize_downloads",
             "params": {}
         })
+
+    # -------- SHELL COMMAND --------
+    # Pattern: "run <cmd> in <path>" or "run <cmd>"
+    run_in_match = re.search(r"run\s+(.+?)\s+in\s+(.+)", text, flags=re.IGNORECASE)
+    if run_in_match:
+        cmd = run_in_match.group(1).strip().strip('"')
+        cwd = run_in_match.group(2).strip().strip('"')
+        if cmd:
+            actions.append({
+                "type": "system",
+                "action": "run_command",
+                "params": {"cmd": cmd, "cwd": cwd}
+            })
+    else:
+        run_match = re.search(r"run\s+(.+)", text, flags=re.IGNORECASE)
+        if run_match:
+            cmd = run_match.group(1).strip().strip('"')
+            if cmd:
+                actions.append({
+                    "type": "system",
+                    "action": "run_command",
+                    "params": {"cmd": cmd}
+                })
 
     if actions:
         return actions

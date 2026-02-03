@@ -44,8 +44,19 @@ except Exception as e:
 
 def main():
     try:
-        log_error("main() started, waiting 10 seconds...")
-        time.sleep(10)
+        log_error("main() started")
+        
+        # Start LLM server FIRST so it's ready when user opens popup
+        if not is_server_running():
+            log_error("Starting LLM server...")
+            start_server()
+            log_error("Waiting for server to be ready...")
+            if not wait_for_server(timeout=60):
+                log_error("Server failed to start, but continuing...")
+            else:
+                log_error("LLM server is ready!")
+        else:
+            log_error("LLM server already running")
         
         log_error("Starting tray...")
         tray_thread = start_tray()
@@ -54,12 +65,6 @@ def main():
         log_error("Starting hotkey...")
         start_hotkey()
         log_error("Hotkey started")
-
-        if not is_server_running():
-            log_error("Starting server...")
-            start_server()
-            if not wait_for_server():
-                log_error("Server failed to start, but continuing...")
 
         log_error("Waiting for tray thread to finish (app running)...")
         # Wait for tray thread to finish (keeps app alive)

@@ -1,13 +1,12 @@
 import subprocess
 import time
 import requests
+from core.config import load_server_config
 
 # ===============================
 # LLAMA SERVER CONFIG
 # ===============================
-LLAMA_SERVER_URL = "http://127.0.0.1:8080"
-LLAMA_SERVER_EXE = r"C:\Users\Admin\llma.cpp\llama-server.exe"
-MODEL_PATH = r"C:\Users\Admin\llma.cpp\models\phi3.gguf"
+SERVER_CFG = load_server_config()
 
 
 def is_server_running():
@@ -15,7 +14,7 @@ def is_server_running():
     Check if llama-server is already running.
     """
     try:
-        requests.get(f"{LLAMA_SERVER_URL}/health", timeout=1)
+        requests.get(f"{SERVER_CFG.base_url}/health", timeout=1)
         return True
     except Exception:
         return False
@@ -29,9 +28,9 @@ def start_server():
 
     subprocess.Popen(
         [
-            LLAMA_SERVER_EXE,
-            "-m", MODEL_PATH,
-            "--port", "8080"
+            SERVER_CFG.exe_path,
+            "-m", SERVER_CFG.model_path,
+            "--port", str(SERVER_CFG.port)
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
