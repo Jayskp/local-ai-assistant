@@ -10,6 +10,7 @@ from automations.tweaks import (
     dev_mode,
 )
 from automations.probes import run_probe, apply_change
+from automations.universal_launcher import open_app_or_file, open_common_app
 from core.utils import summarize_output
 
 
@@ -26,6 +27,20 @@ def execute_command(command: dict):
         if action == "open_vscode":
             open_vscode()
             return "✅ VS Code opened."
+        
+        # Universal app opener
+        if action == "open_any":
+            app_name = params.get("name", "")
+            if not app_name:
+                return "⚠️ No app/file name provided."
+            
+            # Try common apps first (faster)
+            result = open_common_app(app_name)
+            if result:
+                return result
+            
+            # Full search
+            return open_app_or_file(app_name)
 
     if command_type == "file":
         if action == "organize_downloads":

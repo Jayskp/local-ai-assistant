@@ -93,8 +93,39 @@ def parse_with_llm(user_input: str):
 def _build_prompt(user_input: str) -> str:
     tools = """
 You can return these actions:
- - probe_system (type: tool, params: { "probe": one of ["systeminfo","cpu_mem","power_plan","storage","network_basic","ping","top_processes","startup"] })
- - apply_change (type: tool, params: { "change": one of ["flush_dns","winsock_reset","power_plan_high","power_plan_balanced","power_plan_low"], "confirm": true|false })
+
+**Diagnostic Probes** (type: tool, action: probe_system):
+ - systeminfo: Full system information
+ - cpu_mem: CPU and memory usage
+ - power_plan: Current power plan
+ - storage: Disk space on all drives
+ - disk_usage: Detailed drive usage
+ - network_basic: IP configuration
+ - ping: Test internet connectivity
+ - wifi_status: Wi-Fi connection details
+ - windows_update_status: Pending Windows updates
+ - temp_files_size: Size of temporary files
+ - battery_status: Battery charge and status
+ - top_processes: Top 5 CPU-intensive processes
+ - startup: Startup programs
+
+**System Changes** (type: tool, action: apply_change):
+ - flush_dns: Clear DNS cache
+ - winsock_reset: Reset network stack
+ - power_plan_high: Set high performance mode
+ - power_plan_balanced: Set balanced power mode
+ - power_plan_low: Set power saver mode
+ - clean_temp_files: Delete temporary files
+ - wifi_off: Disable Wi-Fi
+ - wifi_on: Enable Wi-Fi
+ - check_windows_updates: Open Windows Update settings
+ - disk_cleanup: Run Windows Disk Cleanup tool
+
+**Reasoning Guidelines**:
+1. When user reports a problem (slow, network issues, low space), first run relevant probes
+2. Analyze probe results and suggest specific fixes
+3. For changes requiring confirmation, set confirm=false and explain what will happen
+4. Only set confirm=true if user explicitly agrees to the change
 
 Rules:
 - Only output JSON matching the schema.
@@ -212,11 +243,20 @@ def _validate_actions(actions):
         if action_type == "tool":
             if action_name == "probe_system":
                 probe = params.get("probe") if isinstance(params, dict) else None
-                if probe not in {"systeminfo", "cpu_mem", "power_plan", "storage", "network_basic", "ping", "top_processes", "startup"}:
+                valid_probes = {
+                    "systeminfo", "cpu_mem", "power_plan", "storage", "disk_usage",
+                    "network_basic", "ping", "wifi_status", "windows_update_status",
+                    "temp_files_size", "battery_status", "top_processes", "startup"
+                }
+                if probe not in valid_probes:
                     continue
             elif action_name == "apply_change":
                 change = params.get("change") if isinstance(params, dict) else None
-                if change not in {"flush_dns", "winsock_reset", "power_plan_high", "power_plan_balanced", "power_plan_low"}:
+                valid_changes = {
+                    "flush_dns", "winsock_reset", "power_plan_high", "power_plan_balanced", "power_plan_low",
+                    "clean_temp_files", "wifi_off", "wifi_on", "check_windows_updates", "disk_cleanup"
+                }
+                if change not in valid_changes:
                     continue
             else:
                 continue

@@ -71,10 +71,11 @@ def main():
         tray_thread.join()
         log_error("Tray thread ended, application exiting")
     except Exception as e:
-        log_error(f"Error in main(): {str(e)}\n{traceback.format_exc()}")
+        log_error(f"Error in main(): {str(e)}\\n{traceback.format_exc()}")
         # Keep running anyway with fallback loop
         while True:
             time.sleep(1)
 
 if __name__ == "__main__":
     main()
+

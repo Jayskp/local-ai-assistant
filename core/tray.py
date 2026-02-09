@@ -37,6 +37,38 @@ def on_exit(icon, item):
     sys.exit(0)
 
 
+def on_open(icon, item):
+    """Open the assistant popup from tray (launches subprocess)"""
+    import subprocess
+    try:
+        if getattr(sys, 'frozen', False):
+            # Running as compiled exe - launch separate popup.exe
+            popup_exe = os.path.join(os.path.dirname(sys.executable), "popup.exe")
+            
+            if not os.path.exists(popup_exe):
+                log_error(f"ERROR: popup.exe not found at {popup_exe}")
+                return
+            
+            log_error(f"Launching popup.exe from: {popup_exe}")
+            subprocess.Popen(
+                [popup_exe],
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+            )
+        else:
+            # Running as script - use -m module
+            base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            log_error(f"Launching popup as script from: {base}")
+            subprocess.Popen(
+                [sys.executable, "-m", "core.popup_webview"],
+                cwd=base
+            )
+        log_error("Popup subprocess launched")
+    except Exception as e:
+        log_error(f"Failed to launch popup: {e}")
+
+
+
+
 def run_tray():
     max_retries = 5
     retry_delay = 10  # seconds
@@ -49,6 +81,7 @@ def run_tray():
                 create_image(),
                 "Local AI Assistant",
                 menu=Menu(
+                    MenuItem("Open Assistant", on_open),
                     MenuItem("Exit", on_exit)
                 )
             )
